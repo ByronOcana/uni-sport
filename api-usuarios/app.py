@@ -1,9 +1,10 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS 
 import mysql.connector
 
 
 app = Flask(__name__)
-
+CORS(app)
 
 def get_connection():
     return mysql.connector.connect(
@@ -100,34 +101,7 @@ def auth():
         "mensaje": "Autenticación exitosa",
         "usuario": usuario
     }), 200
-    
-@app.route("/registro", methods=["POST"])
-def registro():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Se requiere datos JSON"}), 400
-    
-    nombre = data.get("nombre")
-    nickname = data.get("nickname")
-    correo = data.get("correo")
-    telefono = data.get("telefono")
-    password_hash = data.get("password_hash")
-    
-    if not all([nombre, nickname, correo, telefono, password_hash]):
-        return jsonify({"error": "Faltan campos: 'nombre', 'nickname', 'correo', 'telefono' y 'password_hash' son requeridos"}), 400
-    
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute(f"""
-        INSERT INTO usuarios (nombre, nickname, correo, telefono, password_hash)
-        VALUES ('{nombre}', '{nickname}', '{correo}', '{telefono}', '{password_hash}')
-    """)
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({"mensaje": "Registro exitoso"}), 201
+
 
 @app.route("/registro", methods=["POST"])
 def registro():

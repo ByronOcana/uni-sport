@@ -10,6 +10,7 @@ services:
     depends_on:
       - api-transacciones
       - api-usuarios
+      - api-modules
     networks:
       - gateway-network
 
@@ -28,6 +29,17 @@ services:
   api-usuarios:
     container_name: api-usuarios
     build: ./api-usuarios/
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - api-network
+      - gateway-network
+  
+
+  api-modules:
+    container_name: api-modules
+    build: ./api-modules/
     restart: always
     depends_on:
       - db

@@ -1,10 +1,11 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS 
 import mysql.connector
 import requests
 
 
 app = Flask(__name__)
-
+CORS(app)
 
 def get_connection():
     return mysql.connector.connect(
@@ -122,6 +123,13 @@ def auth():
         print("Tiempo de espera agotado para api-usuarios", flush=True)
         return jsonify({"error": "Tiempo de espera agotado"}, 503)
 
+
+@app.route("/modules")
+def modules():
+    resp = requests.get("http://api-modules:5003/modules")
+    return jsonify(resp.json()), resp.status_code
+
+
 @app.route("/registro", methods=["POST"])
 def registro():
     try:
@@ -136,15 +144,7 @@ def registro():
     except requests.exceptions.Timeout:
         print("Tiempo de espera agotado para api-usuarios", flush=True)
         return jsonify({"error": "Tiempo de espera agotado"}, 503)
-    
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-
-@app.route("/registro", methods=["POST"])
-def registro():
-    data = request.get_json()
-    if data is None:
-        return jsonify({"error": "Invalid JSON"}), 400
-    resp = requests.post("http://api-usuarios:5002/registro", json=data)
-    return jsonify(resp.json())
