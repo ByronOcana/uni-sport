@@ -1,88 +1,55 @@
-# 🏆 UniSport
-> Casa de apuestas deportivas con enfoque en torneos universitarios
+# Circuit Breaker
 
----
+Debido a que en el gateway se hace uso de dos servicios `/mascotas` y `/usuarios` para almacenar el contador de errores y el estado de abierto o cerrado se implemento usando un diccionario
 
-## 📋 Requisitos previos
+![](evidencia/contador_errores.png)
 
-Antes de correr el proyecto asegúrate de tener instalado:
+De igual forma se separaron los servicios en funciones aparte y fuera de los endpoint para evitar la repetición de código del manejo de errores, ya que todos devuelve la misma información
 
-- [Docker](https://www.docker.com/products/docker-desktop)
-- [Node.js](https://nodejs.org/) — solo para el frontend
+## Codigo Explicado
 
----
+Para los servicios de `/mascotas` y `/usuarios` se usaron las misma lógica para el Circuit Breaker:
 
-## 🚀 Cómo correr el proyecto
+Al inicio de cada try hay un condicional que en cado de que se defina break como true, pone en suspendió el servicio.
 
-### 1. Clona el repositorio
-```bash
-git clone https://github.com/iNothingAtAll/uni-sport.git
-cd UniSport
-```
+![](evidencia/condicional_break.png)
 
-### 2. Configura las variables de entorno
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
-```
-MYSQL_DATABASE=db
-MYSQL_USER=admin
-MYSQL_PASSWORD=admin
-MYSQL_ROOT_PASSWORD=root
-PMA_HOST=db
-PMA_PORT=3306
-```
+Si al hacer una petición a la servicio de `/usuarios` responde correctamente el contador de errores se restablece a cero para próximas peticiones.
 
-### 3. Levanta los servicios con Docker
-```bash
-docker-compose up --build
-```
+![](evidencia/try_usuarios.png)
 
-### 4. Corre el frontend
-```bash
-cd Front
-npm install
-npm start
-```
+En el caso en el que el servicio falle se incrementa el contador de intentos y en caso de llegar al limite de 3 intentos el establece break a true para suspender el servicios. También lanza algunos logs que aparecen en la terminal dentro de docker.
 
----
+Codigo:
 
-## 🌐 Servicios disponibles
+![](evidencia/except_usuarios.png)
 
-| Servicio | URL |
-|---|---|
-| **Gateway** (API principal) | http://localhost:5000 |
-| **phpMyAdmin** (BD) | http://localhost:8080 |
-| **Frontend** | http://localhost:3000 |
+Logs:
 
----
+![](evidencia/logs_gateway.png)
 
-## 📁 Estructura del proyecto
+En caso de que el servicios falle las primeras 2 veces se lanza un mensaje en el que se informa que algo salió mal y que podrías volver a intentar para obtener la información.
 
-```
-UniSport/
-├── gateway/            # API Gateway — punto de entrada
-├── api-usuarios/       # Servicio de usuarios y autenticación
-├── api-transacciones/  # Servicio de transacciones y apuestas
-├── api-modules/        # Servicio de módulos adicionales
-├── db/                 # Scripts de inicialización de la BD
-├── Front/              # Frontend (requiere Node.js)
-├── .env                # Variables de entorno (no subir a GitHub)
-├── .gitignore
-└── Compose.yaml
-```
+![](evidencia/resultado_gateway.png)
 
----
+Pero en caso de que este termine los intentos se le informa que el servicio fue temporalmente suspendido
 
-## 📌 Endpoints principales
+![](evidencia/servicio_suspendido.png)
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | `/` | Info general de los servicios |
-| GET | `/usuarios` | Lista todos los usuarios |
-| GET | `/usuario/<id>` | Obtiene un usuario por ID |
-| POST | `/usuario/auth` | Autenticación de usuario |
-| POST | `/registro` | Registro de nuevo usuario |
-| GET | `/transacciones` | Lista todas las transacciones |
-| GET | `/transaccion/<id>` | Obtiene una transacción por ID |
-| GET | `/transacciones/usuario/<id>` | Transacciones de un usuario |
+![](evidencia/servicio_suspendido_2.png)
 
+## Codigo Completo
 
+Usuarios:
+
+![](evidencia/endpoint_usuarios.png)
+
+Mascotas:
+
+![](evidencia/endpoint_mascotas.png)
+
+Endpoints:
+
+![](evidencia/todos_los_endpoints.png)
+
+## Preguntas
