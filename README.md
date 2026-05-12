@@ -52,4 +52,19 @@ Endpoints:
 
 ![](corte3/circuit_breaker/evidencia/todos_los_endpoints.png)
 
+## Implementacion Half Open
+
+Para la implementacion del Half Open se definio un atributo extra de tiempo, en el cual se almacena el tiempo ha espera antes de que el servicio vuelva a intentar
+![](corte3/circuit_breaker/evidencia/tiempo_half_open.png) 
+
+Se agrego en el condicional que define el fallo de todos los intentos el atributo de tiempo y se le da un valor extra de 10 segundos
+
+![](corte3/circuit_breaker/evidencia/pausa_servicio_half_open.png)
+
+Al vovlver a intentar y detectar que el servivio esta bloqueado, comprueba si ha pasado el tiempo de 10 segundos para volver a intentar el servicio
+![](corte3/circuit_breaker/evidencia/condicional_half_open.png)
+
+Logs
+![](corte3/circuit_breaker/evidencia/logs_half_open.png)
+
 ## Preguntas
