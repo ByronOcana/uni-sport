@@ -1,19 +1,25 @@
 from flask import Flask, request, jsonify
 import requests
-
+import time
 
 app = Flask(__name__)
 
 
 
-circuito_usuarios = {"fallos": 0, "break": False}
-circuito_mascotas = {"fallos": 0, "break": False}
+circuito_usuarios = {"fallos": 0, "break": False, "time": 0}
+circuito_mascotas = {"fallos": 0, "break": False, "time": 0}
 
 
 
 def get_usuarios():
     if circuito_usuarios["break"]:
-        return {"error": "El servicio esta suspendido temporalmente"}
+        if time.time() > circuito_usuarios["time"]:
+            circuito_usuarios["break"] = False
+            circuito_usuarios["fallos"] = 0
+            print("Se hizo un reintento del servicio", flush=True)
+
+        else:
+            return {"error": "El servicio esta suspendido temporalmente"}
 
     try:
         respuesta = requests.get("http://usuarios:5000/usuarios", timeout=2).json()
@@ -24,9 +30,10 @@ def get_usuarios():
         circuito_usuarios["fallos"] += 1
         print(f"Se intento hacer uso de usuarios, intento: {circuito_usuarios['fallos']}", flush=True)
 
-        if circuito_usuarios["fallos"] >= 3:
+        if circuito_usuarios["fallos"] >= 2:
             circuito_usuarios["break"] = True
-            print("El servicio de usuarios fue suspendido", flush=True)
+            circuito_usuarios["time"] = time.time() + 10
+            print("El servicio de usuarios fue suspendido durante 10s", flush=True)
 
         return {"error": "No se pudo obtener la info de usuarios, volver a intentar"}
 
@@ -34,7 +41,13 @@ def get_usuarios():
 
 def get_mascotas():
     if circuito_mascotas["break"]:
-        return {"error": "El servicio esta suspendido temporalmente"}
+        if time.time() > circuito_mascotas["time"]:
+            circuito_mascotas["break"] = False
+            circuito_mascotas["fallos"] = 0
+            print("Se hizo un reintento del servicio", flush=True)
+
+        else:
+            return {"error": "El servicio esta suspendido temporalmente"}
 
     try:
         respuesta = requests.get("http://backend:5000/mascotas", timeout=2).json()
@@ -45,9 +58,10 @@ def get_mascotas():
         circuito_mascotas["fallos"] += 1
         print(f"Se intento hacer uso de mascotas, intento: {circuito_mascotas['fallos']}", flush=True)
 
-        if circuito_mascotas["fallos"] >= 3:
+        if circuito_mascotas["fallos"] >= 2:
             circuito_mascotas["break"] = True
-            print("El servicio de mascotas fue suspendido", flush=True)
+            circuito_mascotas["time"] = time.time() + 10
+            print(f"El servicio de mascotas fue suspendido durante 10s", flush=True)
 
         return {"error": "No se pudo obtener la info de mascotas, volver a intentar"}
 
