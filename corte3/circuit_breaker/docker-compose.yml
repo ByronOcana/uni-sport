@@ -1,0 +1,77 @@
+services:
+  backend:
+    container_name: backend
+    build: ./backend
+    ports:
+    - "5002:5000"
+    depends_on:
+    - db
+    volumes:
+    - ./backend:/app
+    env_file:
+    - .env
+    networks:
+      - api-network
+  
+  db:
+    container_name: db
+    image: mariadb:11.4.8-noble
+    restart: always
+    env_file: .env
+    volumes:
+      - ./db/:/docker-entrypoint-initdb.d/
+      - db:/var/lib/mysql
+    networks:
+      - api-network
+      - phpmyadmin-network
+
+  usuarios:
+    container_name: usuarios
+    build: ./usuarios
+    ports:
+      - "5001:5000"
+    volumes:
+    - ./usuarios:/app
+
+    networks:
+      - api-network
+
+
+  phpmyadmin:  
+    container_name: phpmyadmin
+    image: phpmyadmin:5.2.3-apache
+    restart: always
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - 8080:80
+    networks:
+      - phpmyadmin-network
+
+
+  gateway:
+    container_name: gateway
+    build: ./gateway
+    ports:
+      - "5000:5000"
+    
+    volumes:
+      - ./gateway/:/app/
+    depends_on:
+      - backend
+      - usuarios
+    networks:
+    - api-network
+
+
+volumes:
+  db:
+ 
+
+networks:  
+  phpmyadmin-network:
+    driver: bridge 
+
+  api-network:
+    driver: bridge 
