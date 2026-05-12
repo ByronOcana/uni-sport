@@ -25,6 +25,13 @@ def usuario(id):
 def usuarios():
     return jsonify(usuariosdb), 200
 
+
+@app.route("/health")
+def health():
+    return jsonify({
+        "menssage": "todo bien"
+    }), 200
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 

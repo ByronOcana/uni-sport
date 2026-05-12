@@ -135,5 +135,27 @@ def get_duenyo(id_duenyo):
         return jsonify({"error": "se tarda mucho"}), 503
 
 
+@app.route("/mascotas/health")
+def mascotas_health():
+    try:
+        response = requests.get("http://backend:5000/health", timeout=2)
+        health = response.json()
+        return jsonify(health), 200
+   
+    except:
+        return jsonify({"error": "Servicio caido"}), 503
+
+
+@app.route("/usuarios/health")
+def usuarios_health():
+    try:
+        response = requests.get("http://usuarios:5000/health", timeout=2)
+        health = response.json()
+        return jsonify(health), 200
+   
+    except:
+        return jsonify({"error": "Servicio caido"}), 503
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
