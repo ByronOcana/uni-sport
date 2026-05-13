@@ -22,8 +22,11 @@ def get_usuarios():
             return {"error": "El servicio esta suspendido temporalmente"}
 
     try:
+        inicio = time.time()
         respuesta = requests.get("http://usuarios:5000/usuarios", timeout=2).json()
         circuito_usuarios["fallos"] = 0
+        final = time.time()
+        print(f"Han pasado {final - inicio}s")
         return respuesta
 
     except:
@@ -50,8 +53,11 @@ def get_mascotas():
             return {"error": "El servicio esta suspendido temporalmente"}
 
     try:
+        inicio = time.time()
         respuesta = requests.get("http://backend:5000/mascotas", timeout=2).json()
         circuito_mascotas["fallos"] = 0
+        final = time.time()
+        print(f"Han pasado {final - inicio}s")
         return respuesta
     
     except:
@@ -83,35 +89,6 @@ def mascotas():
 def resumen():
     usuarios = get_usuarios()
     mascotas = get_mascotas()
-
-    return jsonify({"usuarios": usuarios, "mascotas": mascotas}), 200
-
-
-
-@app.route("/mascotas/<int:id_mascota>")
-def mascota(id_mascota):
-    try:
-        response = requests.get(f"http://backend:5000/mascotas/{id_mascota}", timeout=2)
-        mascotas = response.json()
-
-        if "error" in mascotas:
-            return jsonify(mascotas), response.status_code
-
-        if response.status_code != 200:
-            return jsonify({"error": "Algo salio mal"}), response.status_code
-
-        for mascota in mascotas:
-            if mascota["id"] == id_mascota:
-                return jsonify(mascota), 200
-
-        return jsonify({"error": "Mascota no encontrada"}), 404
-   
-    except requests.exceptions.ConnectionError:
-        return jsonify({"error": "servicio caido"}), 503
-
-    except requests.exceptions.Timeout:
-        return jsonify({"error": "se tarda mucho"}), 503
-        
 
 
 @app.route("/duenyos/<int:id_duenyo>")
@@ -155,6 +132,13 @@ def usuarios_health():
    
     except:
         return jsonify({"error": "Servicio caido"}), 503
+
+
+@app.route("/health")
+def health():
+    return jsonify({
+        "menssage": "todo bien"
+    }), 200
 
 
 if __name__ == "__main__":
