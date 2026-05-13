@@ -1,0 +1,30 @@
+services:
+  inventario:
+    build: ./inventario
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./inventario:/app
+  pagos:
+    build: ./pagos
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./pagos:/app
+  pedidos:
+    build: ./pedidos
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./pedidos:/app
+  
+  gateway:
+    build: ./gateway
+    ports:
+      - "5000:5000"
+    depends_on:
+      - inventario
+      - pagos
+      - pedidos
+    volumes:
+      - ./gateway:/app
