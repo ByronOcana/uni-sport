@@ -17,24 +17,28 @@ def inventario():
 
 @app.route('/pagos')
 def pagos():
+    tiempo_inicio = time()
+    respuesta = None
+
     try:
-        tiempo_inicio = time()
         print("[PAGOS]: Se inicio la peticion de servicio interno de pagos", flush=True)
         response = requests.get('http://pagos:5002/pagos', timeout=2)    
-        tiempo_final = time()
         print("[PAGOS]: El servicio respondio a la peticion", flush=True)
-        print(f"[PAGOS] El servicio se ha demorando {tiempo_final - tiempo_inicio}seg", flush=True)
-        return jsonify(response.json())
+        respuesta = response.json()
 
     except requests.exceptions.Timeout:
         print("[PAGOS: ERROR]: El servicio demora mucho en responder", flush=True)
-        return jsonify({"error": "El servicio esta demorando mucho"})
+        respuesta = {"error": "El servicio esta demorando mucho"}
 
     except requests.exceptions.ConnectionError:
         print("[PAGOS: ERROR]: No se a podido hacer una conexcion con el serivicio", flush=True)
-        return jsonify({"error": "El no esta disponible"})
+        respuesta ={"error": "El no esta disponible"}
 
+    finally:
+        tiempo_final = time()
+        print(f"[PAGOS] El servicio se ha demorando {tiempo_final - tiempo_inicio}seg", flush=True)
 
+    return jsonify(respuesta)
 
 @app.route('/monitor')
 def monitor():
