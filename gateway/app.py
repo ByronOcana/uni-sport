@@ -17,6 +17,12 @@ def get_connection():
     )
 
 
+errores = {
+    'pedidos': 0,
+    'inventario': 0,
+    'pagos': 0
+}
+
 
 def check_servicio(url_servicio, nombre):
     tiempo_inicio = time()
