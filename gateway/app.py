@@ -18,9 +18,12 @@ def get_connection():
 
 
 errores = {
-    'pedidos': 0,
-    'inventario': 0,
-    'pagos': 0
+    'usuarios': 0,
+    'transacciones': 0,
+    'usuario-id': 0,
+    'transaccion-id': 0,
+    'transacciones-usuario': 0
+
 }
 
 
@@ -67,7 +70,7 @@ def get_usuarios():
 
 @app.route("/usuario/<int:usuario_id>")
 def get_usuario(usuario_id):
-    return jsonify(check_servicio(f"http://api-usuarios:5002/usuario/{usuario_id}", "usuarios"))
+    return jsonify(check_servicio(f"http://api-usuarios:5002/usuario/{usuario_id}", "usuario-id"))
 
 
 @app.route("/transacciones")
@@ -82,7 +85,7 @@ def get_transaccion(transaccion_id):
 
 @app.route("/transacciones/usuario/<int:usuario_id>")
 def get_transacciones_usuario(usuario_id):
-    return check_servicio(f"http://api-transacciones:5001/transacciones/usuario/{usuario_id}", "transacciones-usuerio")
+    return check_servicio(f"http://api-transacciones:5001/transacciones/usuario/{usuario_id}", "transacciones-usuario")
 
 
 @app.route("/usuario/auth", methods=["POST"])
