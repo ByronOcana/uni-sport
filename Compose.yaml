@@ -13,6 +13,8 @@ services:
       - api-modules
     networks:
       - gateway-network
+    volumes:
+      - ./gateway/:/home/app/
 
 
   api-transacciones:

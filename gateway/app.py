@@ -125,6 +125,21 @@ def registro():
         print("Tiempo de espera agotado para api-usuarios", flush=True)
         return jsonify({"error": "Tiempo de espera agotado"}, 503)
 
+@app.route("/health")
+def health():
+    return jsonify({
+        "Servicio": "Gateway",
+        "status": "OK 😘",
+        })
+
+@app.route("/metricas")
+def metricas():
+    servicios = {
+        'usuarios': check_servicio("http://api-usuarios:5002/health", "usuarios"),
+        'transacciones': check_servicio("http://api-transacciones:5001/health", "transacciones"),
+        'modules': check_servicio("http://api-modules:5003/health", "modules"),
+    }
+    return jsonify(servicios)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
