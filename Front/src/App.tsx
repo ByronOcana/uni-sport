@@ -3,7 +3,7 @@ import LoginPage from "./Pages/LoginPage"
 import Dashboardpage from "./Pages/DashboardPage"
 import RegisterPage from "./Pages/RegisterPage"
 import BetsPage from "./Pages/BetsPage"
-import BetHistoryPage from "./Pages/BetHistoryPage"
+import OnlinePage from "./Pages/OnlinePage"
 import "./App.css"
 
 function App() {
@@ -14,7 +14,7 @@ function App() {
         <Route path="/profile" element={<Dashboardpage />} />
         <Route path="/Registro" element={<RegisterPage />} />
         <Route path="/bets" element={<BetsPage />} />
-        <Route path="/history" element={<BetHistoryPage />} />
+        <Route path="/online" element={<OnlinePage />} />
       </Routes>
     </BrowserRouter>
   )
