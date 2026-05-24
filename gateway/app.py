@@ -26,6 +26,14 @@ errores = {
 
 }
 
+circuit_breaker = {
+    'usuarios': False,
+    'transacciones': False,
+    'usuario-id': False,
+    'transaccion-id': False,
+    'transacciones-usuario': False
+    }
+
 
 def check_servicio(url_servicio, nombre):
     tiempo_inicio = time()
@@ -124,12 +132,17 @@ def registro():
     except requests.exceptions.Timeout:
         print("Tiempo de espera agotado para api-usuarios", flush=True)
         return jsonify({"error": "Tiempo de espera agotado"}, 503)
+    
+
+@app.route("/eventos")
+def eventos():
+    return jsonify(check_servicio("http://api-eventos:5004/eventos", "eventos"))
 
 @app.route("/health")
 def health():
     return jsonify({
         "Servicio": "Gateway",
-        "status": "OK 😘",
+        "status": "OK",
         })
 
 @app.route("/metricas")

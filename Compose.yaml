@@ -48,6 +48,16 @@ services:
     networks:
       - api-network
       - gateway-network
+  
+  api-eventos:
+    container_name: api-eventos
+    build: ./api-eventos/
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - api-network
+      - gateway-network
 
   db:
     container_name: db
