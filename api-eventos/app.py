@@ -26,6 +26,30 @@ eventos = [
         "equipos": ["Unicauca", "UniValle", "Unicomfacauca", "Colegio mayor"],
         "fecha": "2026-06-17",
         "lugar": "Pista de atletismo de la universidad del cauca"
+    },
+    {
+        "id": 4,
+        "nombre": "Torneo Universitario de Voleibol",
+        "deporte": "Voleibol",
+        "equipos": ["Unicauca", "Unicomfacauca"],
+        "fecha": "2026-06-20",
+        "lugar": "Coliseo la estancia Popayán"
+    },
+    {
+        "id": 5,
+        "nombre": "Copa Interuniversitaria de Natación",
+        "deporte": "Natación",
+        "equipos": ["UniValle", "Colegio mayor", "Unicauca"],
+        "fecha": "2026-06-22",
+        "lugar": "Complejo deportivo la villa"
+    },
+    {
+        "id": 6,
+        "nombre": "Campeonato de Ajedrez Universitario",
+        "deporte": "Ajedrez",
+        "equipos": ["Unicomfacauca", "UniValle", "Unicauca", "Colegio mayor"],
+        "fecha": "2026-06-25",
+        "lugar": "Auditorio Universidad del Cauca"
     }
 ]
 
