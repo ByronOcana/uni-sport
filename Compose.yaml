@@ -11,6 +11,7 @@ services:
       - api-transacciones
       - api-usuarios
       - api-modules
+      - api-eventos
     networks:
       - gateway-network
     volumes:
@@ -70,6 +71,7 @@ services:
     networks:
       - api-network
       - phpmyadmin-network
+
 
 
   phpmyadmin:  

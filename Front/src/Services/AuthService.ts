@@ -1,17 +1,16 @@
 export const login = async (nickname: string, password: string) => {
+
   const response = await fetch("http://localhost:5000/usuario/auth", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      nickname: nickname,
+      nickname,
       password_hash: password,
     }),
   });
-
   const data = await response.json();
-
   if (!response.ok) {
     throw new Error(data.error || "Error en login");
   }

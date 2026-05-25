@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS modules;
 
-CREATE TABLE modules (
+CREATE TABLE IF NOT EXISTS modules (
     id INT AUTO_INCREMENT PRIMARY KEY,
     description VARCHAR(100),
     code VARCHAR(10),

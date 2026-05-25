@@ -1,61 +1,105 @@
 from flask import Flask, jsonify
-
+import mysql.connector
 app = Flask(__name__)
 
-eventos = [
-    {
-        "id": 1,
-        "nombre": "Copa Universitaria",
-        "deporte": "Fútbol",
-        "equipos": ["Unicauca", "UniValle"],
-        "fecha": "2026-06-15",
-        "lugar": "Coliseo la estancia Popayán"
-    },
-    {
-        "id": 2,
-        "nombre": "Torneo Interuniversitario de Baloncesto",
-        "deporte": "Baloncesto",
-        "equipos": ["Unicomfacauca", "Colegio mayor"],
-        "fecha": "2026-06-16",
-        "lugar": "Gimnasio Universitario del cauca"
-    },
-    {
-        "id": 3,
-        "nombre": "Campeonato Universitario de Atletismo",
-        "deporte": "Atletismo",
-        "equipos": ["Unicauca", "UniValle", "Unicomfacauca", "Colegio mayor"],
-        "fecha": "2026-06-17",
-        "lugar": "Pista de atletismo de la universidad del cauca"
-    },
-    {
-        "id": 4,
-        "nombre": "Torneo Universitario de Voleibol",
-        "deporte": "Voleibol",
-        "equipos": ["Unicauca", "Unicomfacauca"],
-        "fecha": "2026-06-20",
-        "lugar": "Coliseo la estancia Popayán"
-    },
-    {
-        "id": 5,
-        "nombre": "Copa Interuniversitaria de Natación",
-        "deporte": "Natación",
-        "equipos": ["UniValle", "Colegio mayor", "Unicauca"],
-        "fecha": "2026-06-22",
-        "lugar": "Complejo deportivo la villa"
-    },
-    {
-        "id": 6,
-        "nombre": "Campeonato de Ajedrez Universitario",
-        "deporte": "Ajedrez",
-        "equipos": ["Unicomfacauca", "UniValle", "Unicauca", "Colegio mayor"],
-        "fecha": "2026-06-25",
-        "lugar": "Auditorio Universidad del Cauca"
-    }
-]
+def get_connection():
+    return mysql.connector.connect(
+        host="db",
+        user="admin",
+        password="admin",
+        database="db",
+        port="3306"
+    )
+
+@app.route("/")
+def info():
+    return jsonify({
+        "endpoints": [
+            "/eventos",
+            "/evento/<int:evento_id>"
+        ]
+    })
+
 
 @app.route("/eventos")
 def get_eventos():
-    return jsonify({"eventos": eventos})
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            id,
+            nombre,
+            deporte,
+            fecha,
+            lugar,
+            estado
+        FROM eventos
+        ORDER BY fecha ASC
+    """)
+
+    eventos = cursor.fetchall()
+
+    # agregar equipos a cada evento
+    for evento in eventos:
+
+        cursor.execute("""
+            SELECT nombre
+            FROM equipos_evento
+            WHERE id_evento = %s
+        """, (evento["id"],))
+
+        equipos = cursor.fetchall()
+
+        evento["equipos"] = [e["nombre"] for e in equipos]
+
+    conn.close()
+
+    return jsonify({
+        "eventos": eventos
+    })
+
+
+@app.route("/evento/<int:evento_id>")
+def get_evento(evento_id):
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            id,
+            nombre,
+            deporte,
+            fecha,
+            lugar,
+            estado
+        FROM eventos
+        WHERE id = %s
+    """, (evento_id,))
+
+    evento = cursor.fetchone()
+
+    if not evento:
+        return jsonify({
+            "error": "Evento no encontrado"
+        }), 404
+
+    cursor.execute("""
+        SELECT nombre
+        FROM equipos_evento
+        WHERE id_evento = %s
+    """, (evento_id,))
+
+    equipos = cursor.fetchall()
+
+    evento["equipos"] = [e["nombre"] for e in equipos]
+
+    conn.close()
+
+    return jsonify(evento)
+
 
 @app.route("/health")
 def health_check():
@@ -63,6 +107,7 @@ def health_check():
         "Servicio": "Eventos",
         "status": "OK"
     })
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5004)
