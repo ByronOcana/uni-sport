@@ -77,8 +77,12 @@ def get_transacciones_usuario(usuario_id):
     conn.close()
     return transaccion
 
-
-
+@app.route("/health")
+def health():
+    return jsonify({
+        "Servicio": "API Transacciones",
+        "status": "ok"
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)

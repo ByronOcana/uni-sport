@@ -101,7 +101,7 @@ def auth():
         "mensaje": "Autenticación exitosa",
         "usuario": usuario
     }), 200
-    
+
 
 @app.route("/registro", methods=["POST"])
 def registro():
@@ -144,6 +144,12 @@ def registro():
     conn.close()
     return jsonify({"mensaje": "Usuario registrado exitosamente"}), 201
 
+@app.route("/health")
+def health():
+    return jsonify({
+        "Servicio": "API Usuarios",
+        "status": "Ok"
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002)

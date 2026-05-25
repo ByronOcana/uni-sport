@@ -41,6 +41,7 @@ function LoginForm() {
                     placeholder="Usuario"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    required
                 />
 
                 <input
@@ -48,6 +49,7 @@ function LoginForm() {
                     placeholder="Contraseña"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
                 />
 
                 <button type="submit">
