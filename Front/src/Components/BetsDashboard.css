@@ -516,3 +516,49 @@
   .event-body { flex-direction: column; align-items: flex-start; }
   .event-odds { width: 100%; justify-content: flex-end; }
 }
+
+.bets-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.betslip-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-league-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flag-img {
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.sport-icon-char {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.teams-names {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ff4444;
+  font-weight: 700;
+  font-size: 0.75rem;
+  animation: pulse 1.5s infinite;
+}
