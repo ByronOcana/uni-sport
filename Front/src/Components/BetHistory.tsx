@@ -1,62 +1,70 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   ClipboardList, Search, TrendingUp, TrendingDown,
   Target, DollarSign, ChevronDown, ChevronUp
 } from "lucide-react"
+import { getTransaccionesByUsuario } from "../Services/TransaccionService"
+import type { Transaccion } from "../Services/TransaccionService"
 import "./BetHistory.css"
 
-interface BetRecord {
-  id: number
-  date: string
-  event: string
-  league: string
-  pick: string
-  odds: number
-  stake: number
-  status: "ganada" | "perdida" | "pendiente" | "cancelada"
-  potential: number
+const TIPO_LABEL: Record<string, string> = {
+  ganancia:  "Ganada",
+  perdida:   "Perdida",
+  deposito:  "Depósito",
+  retiro:    "Retiro",
 }
 
-const HISTORY: BetRecord[] = [
-  { id: 1,  date: "22 may 2026 · 18:05", event: "Atl. Nacional vs Deportes Tolima",   league: "Primera A",       pick: "Atl. Nacional",  odds: 1.65, stake: 50000,  status: "pendiente", potential: 82500  },
-  { id: 2,  date: "21 may 2026 · 20:31", event: "Junior vs Independiente SF",          league: "Primera A",       pick: "Empate",         odds: 3.40, stake: 20000,  status: "perdida",   potential: 68000  },
-  { id: 3,  date: "20 may 2026 · 14:03", event: "Real Madrid vs Athletic Bilbao",      league: "La Liga",         pick: "Real Madrid",    odds: 1.46, stake: 100000, status: "ganada",    potential: 146000 },
-  { id: 4,  date: "19 may 2026 · 22:10", event: "Boston Celtics vs Miami Heat",        league: "NBA",             pick: "Boston Celtics", odds: 1.55, stake: 30000,  status: "ganada",    potential: 46500  },
-  { id: 5,  date: "18 may 2026 · 15:30", event: "Djokovic vs Alcaraz",                 league: "ATP Tour",        pick: "Alcaraz",        odds: 1.95, stake: 25000,  status: "perdida",   potential: 48750  },
-  { id: 6,  date: "17 may 2026 · 13:02", event: "Bayern Munich vs VfB Stuttgart",      league: "DFB Pokal",       pick: "Bayern Munich",  odds: 1.30, stake: 75000,  status: "ganada",    potential: 97500  },
-  { id: 7,  date: "16 may 2026 · 10:15", event: "Tottenham vs Everton",                league: "Premier League",  pick: "Tottenham",      odds: 1.80, stake: 40000,  status: "cancelada", potential: 72000  },
-  { id: 8,  date: "15 may 2026 · 20:00", event: "Boca Juniors vs River Plate (Comb.)", league: "Liga Prof.",      pick: "Combinada x3",   odds: 5.87, stake: 15000,  status: "perdida",   potential: 88050  },
-  { id: 9,  date: "14 may 2026 · 16:45", event: "Millonarios vs América de Cali",      league: "Primera A",       pick: "América",        odds: 3.20, stake: 10000,  status: "ganada",    potential: 32000  },
-  { id: 10, date: "13 may 2026 · 09:00", event: "West Ham vs Leeds United",            league: "Premier League",  pick: "West Ham",       odds: 2.10, stake: 20000,  status: "perdida",   potential: 42000  },
-]
-
-const STATUS_FILTERS = ["Todas", "Ganadas", "Perdidas", "Pendientes", "Canceladas"]
-const STATUS_MAP: Record<string, BetRecord["status"] | null> = {
-  "Todas": null, "Ganadas": "ganada", "Perdidas": "perdida",
-  "Pendientes": "pendiente", "Canceladas": "cancelada",
-}
-const STATUS_LABEL: Record<BetRecord["status"], string> = {
-  ganada: "Ganada", perdida: "Perdida", pendiente: "Pendiente", cancelada: "Cancelada",
+const STATUS_FILTERS = ["Todas", "Ganadas", "Perdidas", "Depósitos", "Retiros"]
+const STATUS_MAP: Record<string, string | null> = {
+  "Todas":     null,
+  "Ganadas":   "ganancia",
+  "Perdidas":  "perdida",
+  "Depósitos": "deposito",
+  "Retiros":   "retiro",
 }
 
 function BetHistory() {
+  const [transacciones, setTransacciones] = useState<Transaccion[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [activeFilter, setActiveFilter] = useState("Todas")
   const [search, setSearch] = useState("")
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
-  const filtered = HISTORY.filter(b => {
-    const statusMatch = STATUS_MAP[activeFilter] === null || b.status === STATUS_MAP[activeFilter]
-    const searchMatch = search === "" ||
-      b.event.toLowerCase().includes(search.toLowerCase()) ||
-      b.pick.toLowerCase().includes(search.toLowerCase())
-    return statusMatch && searchMatch
+  useEffect(() => {
+    const stored = localStorage.getItem("usuario")
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      getTransaccionesByUsuario(parsed.id)
+        .then(data => {
+          const reales = data ?? []
+          const ejemplo: Transaccion[] = [
+            { monto: 50000, tipo: "ganancia", descripcion: "Copa Universitaria - Unicauca vs UniValle" },
+            { monto: 20000, tipo: "perdida",  descripcion: "Torneo Baloncesto - Unicomfacauca vs Colegio Mayor" },
+            { monto: 75000, tipo: "ganancia", descripcion: "Campeonato Atletismo - Unicauca" },
+            { monto: 30000, tipo: "perdida",  descripcion: "Torneo Voleibol - Colegio Mayor vs Unicauca" },
+            { monto: 15000, tipo: "ganancia", descripcion: "Copa Natación - UniValle vs Colegio Mayor" },
+          ]
+          setTransacciones([...reales, ...ejemplo])
+        })
+        .catch(() => setError(true))
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
+    }
+  }, [])
+
+  const filtered = transacciones.filter(t => {
+    const tipoMatch = STATUS_MAP[activeFilter] === null || t.tipo === STATUS_MAP[activeFilter]
+    const searchMatch = search === "" || t.descripcion?.toLowerCase().includes(search.toLowerCase())
+    return tipoMatch && searchMatch
   })
 
-  const ganadas     = HISTORY.filter(b => b.status === "ganada").length
-  const perdidas    = HISTORY.filter(b => b.status === "perdida").length
-  const totalStaked = HISTORY.reduce((a, b) => a + b.stake, 0)
-  const totalWon    = HISTORY.filter(b => b.status === "ganada").reduce((a, b) => a + b.potential, 0)
-  const roi         = ((totalWon - totalStaked) / totalStaked * 100).toFixed(1)
+  const ganancias     = transacciones.filter(t => t.tipo === "ganancia").length
+  const perdidas      = transacciones.filter(t => t.tipo === "perdida").length
+  const totalGanado   = transacciones.filter(t => t.tipo === "ganancia").reduce((a, t) => a + t.monto, 0)
+  const totalApostado = transacciones.filter(t => t.tipo === "perdida").reduce((a, t) => a + t.monto, 0)
+  const roi = totalApostado > 0 ? ((totalGanado - totalApostado) / totalApostado * 100).toFixed(1) : "0.0"
 
   return (
     <div className="history-container">
@@ -72,14 +80,14 @@ function BetHistory() {
         <div className="stat-card">
           <Target size={22} color="#c7a110" />
           <div className="stat-info">
-            <span className="stat-val">{HISTORY.length}</span>
-            <span className="stat-label">Total Apuestas</span>
+            <span className="stat-val">{transacciones.length}</span>
+            <span className="stat-label">Total</span>
           </div>
         </div>
         <div className="stat-card green">
           <TrendingUp size={22} color="#4caf50" />
           <div className="stat-info">
-            <span className="stat-val">{ganadas}</span>
+            <span className="stat-val">{ganancias}</span>
             <span className="stat-label">Ganadas</span>
           </div>
         </div>
@@ -93,7 +101,7 @@ function BetHistory() {
         <div className="stat-card gold">
           <DollarSign size={22} color="#c7a110" />
           <div className="stat-info">
-            <span className="stat-val">${totalWon.toLocaleString("es-CO")}</span>
+            <span className="stat-val">${totalGanado.toLocaleString("es-CO")}</span>
             <span className="stat-label">Total Ganado</span>
           </div>
         </div>
@@ -112,7 +120,7 @@ function BetHistory() {
           <Search size={15} color="#555" className="search-icon" />
           <input
             className="search-input"
-            placeholder="Buscar apuesta..."
+            placeholder="Buscar transacción..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -130,83 +138,96 @@ function BetHistory() {
         </div>
       </div>
 
+      {/* Estados */}
+      {loading && (
+        <div className="no-results">
+          <div className="ev-spinner" />
+          <p>Cargando transacciones...</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="no-results">
+          <p style={{ color: "#f44336" }}>No se pudo conectar con el servicio.</p>
+        </div>
+      )}
+
       {/* Tabla */}
-      <div className="history-table-wrapper">
-        {filtered.length === 0 ? (
-          <div className="no-results">
-            <Search size={32} color="#444" />
-            <p>No hay apuestas que coincidan.</p>
-          </div>
-        ) : (
-          <table className="history-table">
-            <thead>
-              <tr>
-                <th>#</th><th>Fecha</th><th>Evento</th><th>Liga</th>
-                <th>Selección</th><th>Cuota</th><th>Apostado</th><th>Potencial</th><th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(bet => (
-                <>
-                  <tr
-                    key={bet.id}
-                    className={`table-row ${expandedId === bet.id ? "expanded" : ""} ${bet.status}`}
-                    onClick={() => setExpandedId(expandedId === bet.id ? null : bet.id)}
-                  >
-                    <td className="id-cell">#{bet.id}</td>
-                    <td className="date-cell">{bet.date}</td>
-                    <td className="event-cell">{bet.event}</td>
-                    <td className="league-cell">{bet.league}</td>
-                    <td className="pick-cell">{bet.pick}</td>
-                    <td className="odds-cell">{bet.odds.toFixed(2)}</td>
-                    <td className="stake-cell">${bet.stake.toLocaleString("es-CO")}</td>
-                    <td className={`potential-cell ${bet.status === "ganada" ? "won" : ""}`}>
-                      ${bet.potential.toLocaleString("es-CO")}
-                    </td>
-                    <td>
-                      <div className="status-cell">
-                        <span className={`status-badge ${bet.status}`}>{STATUS_LABEL[bet.status]}</span>
-                        {expandedId === bet.id
-                          ? <ChevronUp size={14} color="#555" />
-                          : <ChevronDown size={14} color="#555" />}
-                      </div>
-                    </td>
-                  </tr>
-                  {expandedId === bet.id && (
-                    <tr key={`${bet.id}-detail`} className="detail-row">
-                      <td colSpan={9}>
-                        <div className="detail-panel">
-                          <div className="detail-item">
-                            <span className="detail-label">Ganancia neta</span>
-                            <span className={`detail-val ${bet.status === "ganada" ? "positive" : "negative"}`}>
-                              {bet.status === "ganada"
-                                ? `+$${(bet.potential - bet.stake).toLocaleString("es-CO")}`
-                                : bet.status === "perdida"
-                                ? `-$${bet.stake.toLocaleString("es-CO")}`
-                                : "—"}
-                            </span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">Cuota aplicada</span>
-                            <span className="detail-val gold">{bet.odds.toFixed(2)}x</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="detail-label">ID Apuesta</span>
-                            <span className="detail-val">UNS-{String(bet.id).padStart(6, "0")}</span>
-                          </div>
+      {!loading && !error && (
+        <div className="history-table-wrapper">
+          {filtered.length === 0 ? (
+            <div className="no-results">
+              <Search size={32} color="#444" />
+              <p>No hay transacciones que coincidan.</p>
+            </div>
+          ) : (
+            <table className="history-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((t, i) => (
+                  <>
+                    <tr
+                      key={i}
+                      className={`table-row ${expandedId === i ? "expanded" : ""} ${t.tipo}`}
+                      onClick={() => setExpandedId(expandedId === i ? null : i)}
+                    >
+                      <td className="id-cell">#{i + 1}</td>
+                      <td className="pick-cell">{TIPO_LABEL[t.tipo] ?? t.tipo}</td>
+                      <td className="event-cell">{t.descripcion}</td>
+                      <td className={`potential-cell ${t.tipo === "ganancia" ? "won" : ""}`}>
+                        ${t.monto.toLocaleString("es-CO")}
+                      </td>
+                      <td>
+                        <div className="status-cell">
+                          <span className={`status-badge ${t.tipo === "ganancia" ? "ganada" : t.tipo === "perdida" ? "perdida" : t.tipo === "deposito" ? "pendiente" : "cancelada"}`}>
+                            {TIPO_LABEL[t.tipo] ?? t.tipo}
+                          </span>
+                          {expandedId === i
+                            ? <ChevronUp size={14} color="#555" />
+                            : <ChevronDown size={14} color="#555" />}
                         </div>
                       </td>
                     </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                    {expandedId === i && (
+                      <tr key={`${i}-detail`} className="detail-row">
+                        <td colSpan={5}>
+                          <div className="detail-panel">
+                            <div className="detail-item">
+                              <span className="detail-label">Monto</span>
+                              <span className={`detail-val ${t.tipo === "ganancia" ? "positive" : t.tipo === "perdida" ? "negative" : ""}`}>
+                                ${t.monto.toLocaleString("es-CO")}
+                              </span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Tipo</span>
+                              <span className="detail-val gold">{TIPO_LABEL[t.tipo] ?? t.tipo}</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Descripción</span>
+                              <span className="detail-val">{t.descripcion}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       <div className="history-footer">
-        Mostrando {filtered.length} de {HISTORY.length} apuestas
+        Mostrando {filtered.length} de {transacciones.length} transacciones
       </div>
     </div>
   )
