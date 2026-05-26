@@ -59,6 +59,15 @@ services:
     networks:
       - api-network
       - gateway-network
+  api-apuestas:
+    container_name: api-apuestas
+    build: ./api-apuestas/
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - api-network
+      - gateway-network
 
   db:
     container_name: db
