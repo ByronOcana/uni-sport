@@ -562,3 +562,50 @@
   font-size: 0.75rem;
   animation: pulse 1.5s infinite;
 }
+
+.date-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.event-lugar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: #555;
+  margin-top: 6px;
+  border-top: 1px solid #2e302f;
+  padding-top: 8px;
+}
+
+.eventos-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #555;
+  gap: 10px;
+  text-align: center;
+}
+
+.eventos-state p { font-size: 0.9rem; color: #888; margin: 0; }
+.eventos-state small { font-size: 0.75rem; color: #555; }
+.eventos-state.error p { color: #f44336; }
+
+.ev-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #2e302f;
+  border-top-color: #c7a110;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
