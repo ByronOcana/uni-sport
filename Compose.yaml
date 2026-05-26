@@ -11,8 +11,11 @@ services:
       - api-transacciones
       - api-usuarios
       - api-modules
+      - api-eventos
     networks:
       - gateway-network
+    volumes:
+      - ./gateway/:/home/app/
 
 
   api-transacciones:
@@ -46,6 +49,16 @@ services:
     networks:
       - api-network
       - gateway-network
+  
+  api-eventos:
+    container_name: api-eventos
+    build: ./api-eventos/
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - api-network
+      - gateway-network
 
   db:
     container_name: db
@@ -58,6 +71,7 @@ services:
     networks:
       - api-network
       - phpmyadmin-network
+
 
 
   phpmyadmin:  

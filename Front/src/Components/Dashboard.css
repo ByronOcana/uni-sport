@@ -2,7 +2,10 @@
     color: antiquewhite;
     width: 80%;
     border-radius: 20px;
-    background-color: #2c2c2bcf;
+    background-color: #0f1f0ee9;
+    border-color: #00d084;
+    border-style: solid;
+    border: 2px;
     margin-left: 10%;
     margin-top: 5%;
     padding: 15px;

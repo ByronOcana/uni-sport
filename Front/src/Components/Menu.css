@@ -3,9 +3,9 @@
   width: 10%;
   min-width: 220px;
   height: 100%;
-  background: #202423;
+  background: #131b13;
   border: 2px;
-  border-color: #343434;
+  border-color: #1f1f1f;
   border-style: solid;
   display: flex;
   flex-direction: column;
@@ -32,7 +32,7 @@
 .menu-toggle {
   background: transparent;
   border: none;
-  color: #c7a110;
+  color: #ffffff;
   cursor: pointer;
   font-size: 18px;
   padding: 5px;
@@ -42,10 +42,11 @@
   background-color: #2d3230;
   border-left: 4px solid #f5b70036;
   font-weight: bold;
+  color: #ffbf00;
 }
 .menu button:hover {
   background: transparent;
-  color: #f5b700; 
+  color: #f1ce64; 
 }
 
 .menu button:focus {
@@ -67,7 +68,7 @@
   cursor: pointer;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   transition: 0.2s;
-  color: #c7a110;
+  color: #ffffff;
 }
 
 

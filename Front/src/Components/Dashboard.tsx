@@ -9,7 +9,7 @@ function DashboardForm() {
 
     useEffect(() => {
         const stored = localStorage.getItem("usuario")
-
+        debugger;
         if (stored) {
             const parsed = JSON.parse(stored)
             console.log("user::", parsed)

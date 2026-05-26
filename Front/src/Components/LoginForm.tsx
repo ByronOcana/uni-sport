@@ -13,13 +13,15 @@ function LoginForm() {
         e.preventDefault()
 
         try {
+            console.log(username, password)
             const data = await login(username, password)
 
+            if (data.error) {
+                alert(data.error)
+                return
+            }
             alert("Login correcto")
-            
-            console.log(data)
 
-            // guardar usuario
             localStorage.setItem("usuario", JSON.stringify(data.usuario))
             navigate("/profile")
 

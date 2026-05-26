@@ -1,4 +1,3 @@
-
 CREATE TABLE IF NOT EXISTS transacciones (
     id           INTEGER PRIMARY KEY AUTO_INCREMENT,
     id_usuario   INTEGER NOT NULL,
