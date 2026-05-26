@@ -23,7 +23,9 @@ circuit_breaker = {
     'usuario-id': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
     'transaccion-id': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
     'transacciones-usuario': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
-    'eventos': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None}
+    'eventos': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
+    'modules': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
+    'apuestas': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None}
     }
 
 
@@ -151,6 +153,10 @@ def registro():
         print("Tiempo de espera agotado para api-usuarios", flush=True)
         return jsonify({"error": "Tiempo de espera agotado"}, 503)
     
+@app.route("/apuestas")
+def apuestas():
+    return jsonify(check_servicio("http://api-apuestas:5005/apuestas", "apuestas"))
+
 
 @app.route("/eventos")
 def eventos():
@@ -169,6 +175,8 @@ def metricas():
         'usuarios': check_servicio("http://api-usuarios:5002/health", "usuarios"),
         'transacciones': check_servicio("http://api-transacciones:5001/health", "transacciones"),
         'modules': check_servicio("http://api-modules:5003/health", "modules"),
+        'eventos': check_servicio("http://api-eventos:5004/health", "eventos"),
+        'apuestas': check_servicio("http://api-apuestas:5005/health", "apuestas")
     }
     return jsonify(servicios)
 
