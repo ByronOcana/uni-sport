@@ -1,5 +1,20 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { Trophy, Radio, Filter, X, Wallet, CheckCircle, MapPin, Calendar } from "lucide-react"
+import { MdSportsSoccer, MdSportsBasketball } from "react-icons/md"
+import { GiChessKnight } from "react-icons/gi"
+import { getEvents } from "../Services/EventService"
 import "./BetsDashboard.css"
+
+interface EventoAPI {
+  id: number
+  nombre: string
+  deporte: string
+  equipos: string[]
+  fecha: string
+  lugar: string
+  estado: string
+  resultado?: string
+}
 
 interface Event {
   id: number
@@ -13,7 +28,8 @@ interface Event {
   oddsDraw: number
   oddsB: number
   sport: string
-  live?: boolean
+  live: boolean
+  lugar: string
 }
 
 interface BetSelection {
@@ -25,25 +41,54 @@ interface BetSelection {
   odds: number
 }
 
-const EVENTS: Event[] = [
-  { id: 1, league: "Primera A", leagueFlag: "🇨🇴", date: "Hoy", time: "18:00", teamA: "Atl. Nacional", teamB: "Deportes Tolima", oddsA: 1.65, oddsDraw: 3.85, oddsB: 5.25, sport: "⚽", live: true },
-  { id: 2, league: "Primera A", leagueFlag: "🇨🇴", date: "Hoy", time: "20:30", teamA: "Junior Barranquilla", teamB: "Independiente Santa Fe", oddsA: 1.97, oddsDraw: 3.40, oddsB: 4.00, sport: "⚽", live: true },
-  { id: 3, league: "La Liga", leagueFlag: "🇪🇸", date: "Hoy", time: "14:00", teamA: "Real Madrid", teamB: "Athletic Bilbao", oddsA: 1.46, oddsDraw: 4.20, oddsB: 7.10, sport: "⚽" },
-  { id: 4, league: "Premier League", leagueFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", date: "Mañana", time: "10:00", teamA: "Tottenham", teamB: "Everton", oddsA: 1.80, oddsDraw: 3.60, oddsB: 4.49, sport: "⚽" },
-  { id: 5, league: "Premier League", leagueFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", date: "Mañana", time: "12:30", teamA: "West Ham", teamB: "Leeds United", oddsA: 2.10, oddsDraw: 3.20, oddsB: 3.85, sport: "⚽" },
-  { id: 6, league: "DFB Pokal", leagueFlag: "🇩🇪", date: "Hoy", time: "13:00", teamA: "Bayern Munich", teamB: "VfB Stuttgart", oddsA: 1.30, oddsDraw: 5.80, oddsB: 8.20, sport: "⚽" },
-  { id: 7, league: "NBA", leagueFlag: "🇺🇸", date: "Hoy", time: "22:00", teamA: "Boston Celtics", teamB: "Miami Heat", oddsA: 1.55, oddsDraw: 0, oddsB: 2.50, sport: "🏀" },
-  { id: 8, league: "ATP Tour", leagueFlag: "🌍", date: "Hoy", time: "15:00", teamA: "Djokovic", teamB: "Alcaraz", oddsA: 1.90, oddsDraw: 0, oddsB: 1.95, sport: "🎾" },
-]
-
-const SPORTS_FILTER = ["Todos", "⚽ Fútbol", "🏀 Basketball", "🎾 Tenis"]
 const SPORT_MAP: Record<string, string> = {
-  "⚽ Fútbol": "⚽",
-  "🏀 Basketball": "🏀",
-  "🎾 Tenis": "🎾",
+  "Fútbol":     "football",
+  "Baloncesto": "basketball",
+  "Atletismo":  "athletics",
+  "Voleibol":   "volleyball",
+  "Natación":   "swimming",
+  "Ajedrez":    "chess",
 }
 
+const SPORT_ICON: Record<string, React.ReactNode> = {
+  football:   <MdSportsSoccer size={20} color="#c7a110" />,
+  basketball: <MdSportsBasketball size={20} color="#c7a110" />,
+  chess:      <GiChessKnight size={20} color="#c7a110" />,
+}
+
+const FLAG_URL = (code: string) =>
+  `https://flagcdn.com/20x15/${code.toLowerCase()}.png`
+
+const randomOdd = (min: number, max: number) =>
+  parseFloat((Math.random() * (max - min) + min).toFixed(2))
+
+const adaptarEvento = (e: EventoAPI): Event => ({
+  id: e.id,
+  league: e.nombre,
+  leagueFlag: "CO",
+  date: new Date(e.fecha).toLocaleDateString("es-CO", { day: "numeric", month: "short" }),
+  time: new Date(e.fecha).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }),
+  teamA: e.equipos[0] ?? "Equipo A",
+  teamB: e.equipos[1] ?? "Equipo B",
+  oddsA: randomOdd(1.2, 3.5),
+  oddsDraw: e.equipos.length === 2 ? randomOdd(2.5, 5.0) : 0,
+  oddsB: randomOdd(1.2, 3.5),
+  sport: SPORT_MAP[e.deporte] ?? "football",
+  live: e.estado === "en vivo",
+  lugar: e.lugar,
+})
+
+const SPORTS_FILTER = [
+  { key: "Todos",      label: "Todos" },
+  { key: "football",   label: "Fútbol" },
+  { key: "basketball", label: "Basketball" },
+  { key: "chess",      label: "Ajedrez" },
+]
+
 function BetsDashboard() {
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [selections, setSelections] = useState<BetSelection[]>([])
   const [amounts, setAmounts] = useState<Record<number, string>>({})
   const [activeFilter, setActiveFilter] = useState("Todos")
@@ -52,10 +97,19 @@ function BetsDashboard() {
 
   const saldo = 1250.00
 
+  useEffect(() => {
+    getEvents()
+      .then(data => {
+        if (!data || data.error) { setError(true); return }
+        setEvents(data.map(adaptarEvento))
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }, [])
+
   const toggleSelection = (event: Event, pick: "A" | "Draw" | "B") => {
     const odds = pick === "A" ? event.oddsA : pick === "Draw" ? event.oddsDraw : event.oddsB
     const label = pick === "A" ? event.teamA : pick === "Draw" ? "Empate" : event.teamB
-
     setSelections(prev => {
       const exists = prev.find(s => s.eventId === event.id && s.pick === pick)
       if (exists) return prev.filter(s => !(s.eventId === event.id && s.pick === pick))
@@ -81,17 +135,13 @@ function BetsDashboard() {
     : parseFloat(amounts[0] || "0") * selections.reduce((acc, s) => acc * s.odds, 1)
 
   const filteredEvents = activeFilter === "Todos"
-    ? EVENTS
-    : EVENTS.filter(e => e.sport === SPORT_MAP[activeFilter])
+    ? events
+    : events.filter(e => e.sport === activeFilter)
 
   const handleConfirm = () => {
     if (selections.length === 0 || totalStake <= 0) return
     setBetPlaced(true)
-    setTimeout(() => {
-      setBetPlaced(false)
-      setSelections([])
-      setAmounts({})
-    }, 3000)
+    setTimeout(() => { setBetPlaced(false); setSelections([]); setAmounts({}) }, 3000)
   }
 
   const quickAdd = (eventId: number, val: number) => {
@@ -102,76 +152,126 @@ function BetsDashboard() {
   return (
     <div className="bets-layout">
 
-      {/* ── Lista de eventos ── */}
+      {/* Lista de eventos */}
       <div className="bets-main">
         <div className="bets-header">
-          <h2 className="bets-title">🏆 Crear Apuesta</h2>
+          <div className="bets-title-row">
+            <Trophy size={20} color="#c7a110" />
+            <h2 className="bets-title">En Vivo</h2>
+          </div>
           <div className="sport-filters">
             {SPORTS_FILTER.map(f => (
-              <button key={f} className={`filter-btn ${activeFilter === f ? "active" : ""}`} onClick={() => setActiveFilter(f)}>
-                {f}
+              <button
+                key={f.key}
+                className={`filter-btn ${activeFilter === f.key ? "active" : ""}`}
+                onClick={() => setActiveFilter(f.key)}
+              >
+                <Filter size={12} />
+                {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="events-list">
-          {filteredEvents.map(event => (
-            <div key={event.id} className="event-card">
-              <div className="event-meta">
-                <span className="event-league">{event.leagueFlag} {event.league}</span>
-                <span className="event-time">
-                  {event.live ? <span className="live-badge">🔴 EN VIVO</span> : `${event.date} · ${event.time}`}
-                </span>
+        {loading && (
+          <div className="eventos-state">
+            <div className="ev-spinner" />
+            <p>Cargando eventos...</p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="eventos-state error">
+            <p>No se pudo conectar con el servicio de eventos.</p>
+            <small>El circuit breaker puede estar activo.</small>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="events-list">
+            {filteredEvents.length === 0 ? (
+              <div className="eventos-state">
+                <p>No hay eventos para este deporte.</p>
               </div>
-              <div className="event-body">
-                <div className="event-teams">
-                  <span className="team">{event.sport} {event.teamA}</span>
-                  <span className="vs">vs</span>
-                  <span className="team">{event.teamB}</span>
+            ) : (
+              filteredEvents.map(event => (
+                <div key={event.id} className="event-card">
+                  <div className="event-meta">
+                    <div className="event-league-info">
+                      <img
+                        src={FLAG_URL(event.leagueFlag)}
+                        alt={event.leagueFlag}
+                        className="flag-img"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+                      />
+                      <span className="event-league">{event.league}</span>
+                    </div>
+                    <span className="event-time">
+                      {event.live
+                        ? <span className="live-badge"><Radio size={10} /> EN VIVO</span>
+                        : <span className="date-time"><Calendar size={11} /> {event.date} · {event.time}</span>}
+                    </span>
+                  </div>
+
+                  <div className="event-body">
+                    <div className="event-teams">
+                      <span className="sport-icon-char">
+                        {SPORT_ICON[event.sport] ?? <MdSportsSoccer size={20} color="#c7a110" />}
+                      </span>
+                      <div className="teams-names">
+                        <span className="team">{event.teamA}</span>
+                        <span className="vs">vs</span>
+                        <span className="team">{event.teamB}</span>
+                      </div>
+                    </div>
+                    <div className="event-odds">
+                      <button className={`odd-btn ${isSelected(event.id, "A") ? "selected" : ""}`} onClick={() => toggleSelection(event, "A")}>
+                        <span className="odd-label">1</span>
+                        <span className="odd-val">{event.oddsA.toFixed(2)}</span>
+                      </button>
+                      {event.oddsDraw > 0 && (
+                        <button className={`odd-btn ${isSelected(event.id, "Draw") ? "selected" : ""}`} onClick={() => toggleSelection(event, "Draw")}>
+                          <span className="odd-label">X</span>
+                          <span className="odd-val">{event.oddsDraw.toFixed(2)}</span>
+                        </button>
+                      )}
+                      <button className={`odd-btn ${isSelected(event.id, "B") ? "selected" : ""}`} onClick={() => toggleSelection(event, "B")}>
+                        <span className="odd-label">2</span>
+                        <span className="odd-val">{event.oddsB.toFixed(2)}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="event-lugar">
+                    <MapPin size={11} color="#555" />
+                    <span>{event.lugar}</span>
+                  </div>
                 </div>
-                <div className="event-odds">
-                  <button className={`odd-btn ${isSelected(event.id, "A") ? "selected" : ""}`} onClick={() => toggleSelection(event, "A")}>
-                    <span className="odd-label">1</span>
-                    <span className="odd-val">{event.oddsA.toFixed(2)}</span>
-                  </button>
-                  {event.oddsDraw > 0 && (
-                    <button className={`odd-btn ${isSelected(event.id, "Draw") ? "selected" : ""}`} onClick={() => toggleSelection(event, "Draw")}>
-                      <span className="odd-label">X</span>
-                      <span className="odd-val">{event.oddsDraw.toFixed(2)}</span>
-                    </button>
-                  )}
-                  <button className={`odd-btn ${isSelected(event.id, "B") ? "selected" : ""}`} onClick={() => toggleSelection(event, "B")}>
-                    <span className="odd-label">2</span>
-                    <span className="odd-val">{event.oddsB.toFixed(2)}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
-      {/* ── Betslip panel ── */}
+      {/* Betslip */}
       <div className="betslip-panel">
         <div className="betslip-header">
-          <span className="betslip-title">🎯 Apuesta</span>
+          <div className="betslip-title-row">
+            <Trophy size={16} color="#c7a110" />
+            <span className="betslip-title">Apuesta</span>
+          </div>
           <span className="betslip-count">{selections.length}</span>
         </div>
 
         <div className="betslip-tabs">
-          <button className={`tab-btn ${betType === "simple" ? "active" : ""}`} onClick={() => setBetType("simple")}>
-            Simple
-          </button>
-          <button className={`tab-btn ${betType === "combinada" ? "active" : ""}`} onClick={() => setBetType("combinada")} disabled={selections.length < 2}>
-            Combinada
-          </button>
+          <button className={`tab-btn ${betType === "simple" ? "active" : ""}`} onClick={() => setBetType("simple")}>Simple</button>
+          <button className={`tab-btn ${betType === "combinada" ? "active" : ""}`} onClick={() => setBetType("combinada")} disabled={selections.length < 2}>Combinada</button>
         </div>
 
         <div className="betslip-body">
           {selections.length === 0 ? (
             <div className="betslip-empty">
-              <span className="empty-icon">🎰</span>
+              <Trophy size={40} color="#333" />
               <p>Selecciona una cuota para comenzar</p>
             </div>
           ) : (
@@ -186,7 +286,9 @@ function BetsDashboard() {
                       </div>
                       <div className="betslip-right">
                         <span className="betslip-odds">{sel.odds.toFixed(2)}</span>
-                        <button className="remove-btn" onClick={() => removeSelection(sel.eventId)}>✕</button>
+                        <button className="remove-btn" onClick={() => removeSelection(sel.eventId)}>
+                          <X size={14} />
+                        </button>
                       </div>
                     </div>
                     <div className="betslip-amount-row">
@@ -223,7 +325,9 @@ function BetsDashboard() {
                         </div>
                         <div className="betslip-right">
                           <span className="betslip-odds">{sel.odds.toFixed(2)}</span>
-                          <button className="remove-btn" onClick={() => removeSelection(sel.eventId)}>✕</button>
+                          <button className="remove-btn" onClick={() => removeSelection(sel.eventId)}>
+                            <X size={14} />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -262,6 +366,7 @@ function BetsDashboard() {
               </div>
 
               <div className="saldo-row">
+                <Wallet size={13} color="#555" />
                 <span>Saldo disponible</span>
                 <span>${saldo.toLocaleString("es-CO")}</span>
               </div>
@@ -270,10 +375,12 @@ function BetsDashboard() {
         </div>
 
         <button className={`confirm-btn ${betPlaced ? "success" : ""}`} onClick={handleConfirm} disabled={selections.length === 0 || totalStake <= 0}>
-          {betPlaced ? "✅ ¡Apuesta Confirmada!" : `Confirmar $${totalStake.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
+          {betPlaced
+            ? <><CheckCircle size={16} /> Apuesta Confirmada</>
+            : `Confirmar $${totalStake.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
         </button>
 
-        {betPlaced && <div className="bet-success-msg">Tu apuesta fue registrada exitosamente 🎉</div>}
+        {betPlaced && <div className="bet-success-msg">Tu apuesta fue registrada exitosamente</div>}
       </div>
     </div>
   )
