@@ -26,6 +26,7 @@ uni-sport/
 ├── api-modules/
 ├── Front/
 ├── db/
+├── evidencias/
 ├── .env.example
 ├── .gitignore
 └── Compose.yaml
@@ -76,7 +77,8 @@ npm run dev
 | api-transacciones | 5001 | Gestión de transacciones |
 | api-usuarios | 5002 | Gestión de usuarios y auth |
 | api-modules | 5003 | Menú lateral dinámico |
-| api-apuestas / api-eventos | 5004 | Apuestas y eventos deportivos |
+| api-eventos | 5004 | Eventos deportivos |
+| api-apuestas | 5005 | Apuestas |
 | MySQL | 3306 | Base de datos |
 | phpMyAdmin | 8080 | Administración BD |
 | Frontend | 5173 | Interfaz de usuario |
@@ -177,3 +179,31 @@ PMA_PORT=
 ```
 
 ⚠️ Nunca subir el archivo `.env` al repositorio.
+
+---
+
+## 📸 Evidencias
+
+### Docker — Contenedores corriendo
+![Docker PS](evidencias/dockerps.png)
+
+### Gateway — Estado del sistema
+![Gateway Health](evidencias/gateway.png)
+
+### Métricas — Estado de todos los servicios
+![Metricas](evidencias/metricas.png)
+
+### Usuarios — Comunicación entre servicios
+![Usuarios](evidencias/usuarios.png)
+
+### Eventos — Datos desde la base de datos
+![Eventos](evidencias/eventos.png)
+
+### Base de datos — phpMyAdmin
+![phpMyAdmin](evidencias/php.png)
+
+### Circuit Breaker — Servicio caído y circuito abierto
+![Circuit Breaker](evidencias/circuit.png)
+
+### Half-Open — Recuperación del servicio
+![Half Open](evidencias/halfopen.png)
