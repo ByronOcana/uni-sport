@@ -17,43 +17,61 @@ def get_connection():
     )
 
 
-errores = {
-    'usuarios': 0,
-    'transacciones': 0,
-    'usuario-id': 0,
-    'transaccion-id': 0,
-    'transacciones-usuario': 0
-
-}
-
 circuit_breaker = {
-    'usuarios': False,
-    'transacciones': False,
-    'usuario-id': False,
-    'transaccion-id': False,
-    'transacciones-usuario': False
+    'usuarios': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
+    'transacciones': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
+    'usuario-id': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
+    'transaccion-id': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
+    'transacciones-usuario': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None},
+    'eventos': {"fallos": 0, "circuito_abierto": False, "tiempo_apertura": None}
     }
 
 
 def check_servicio(url_servicio, nombre):
+    if circuit_breaker[nombre]["circuito_abierto"]:
+        if time() - circuit_breaker[nombre]["tiempo_apertura"] > 30:
+            print(f"[{nombre}]: Half-Open, probando recuperacion", flush=True)
+        else:
+            return {"error": f"Servicio {nombre} no disponible temporalmente"}
+        
     tiempo_inicio = time()
     respuesta = None
 
     try:
         print(f"[{nombre}]: Se inicio la peticion de servicio interno de {nombre}", flush=True)
-        response = requests.get(url_servicio, timeout=2)    
+        response = requests.get(url_servicio, timeout=2)
+        circuit_breaker[nombre]["fallos"] = 0
+        circuit_breaker[nombre]["circuito_abierto"] = False
+        circuit_breaker[nombre]["tiempo_apertura"] = None    
         print(f"[{nombre}]: El servicio respondio a la peticion", flush=True)
         respuesta = response.json()
 
     except requests.exceptions.Timeout:
         print(f"[{nombre}: ERROR]: El servicio demora mucho en responder", flush=True)
-        respuesta = {"error": "El servicio esta demorando mucho"}
-        errores[nombre]  += 1
+        if circuit_breaker[nombre]["circuito_abierto"]:
+            circuit_breaker[nombre]["tiempo_apertura"] = time()
+            print(f"[{nombre}]: Circuito abierto", flush=True)
+        else:
+            circuit_breaker[nombre]["fallos"] += 1
+            if circuit_breaker[nombre]["fallos"] >= 3:
+                circuit_breaker[nombre]["circuito_abierto"] = True
+                circuit_breaker[nombre]["tiempo_apertura"] = time()
+                print(f"[{nombre}]: Circuito abierto", flush=True)
+        respuesta = {"error": "El servicio demora mucho en responder"}
+        
 
     except requests.exceptions.ConnectionError:
         print(f"[{nombre}: ERROR]: No se a podido hacer una conexcion con el serivicio", flush=True)
+        if circuit_breaker[nombre]["circuito_abierto"]:
+            circuit_breaker[nombre]["tiempo_apertura"] = time()
+            print(f"[{nombre}]: Circuito abierto", flush=True)
+        else:
+            circuit_breaker[nombre]["fallos"] += 1
+            if circuit_breaker[nombre]["fallos"] >= 3:
+                circuit_breaker[nombre]["circuito_abierto"] = True
+                circuit_breaker[nombre]["tiempo_apertura"] = time()
+                print(f"[{nombre}]: Circuito abierto", flush=True)
         respuesta = {"error": "El servicio no esta disponible"}
-        errores[nombre]  += 1
 
     finally:
         tiempo_final = time()
